@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import "./db.js";
 import user from "./routes/userRoute.js";
+import market from "./routes/marketRoute.js";
 import morgan from "morgan";
 
 dotenv.config();
@@ -22,5 +23,6 @@ app.use(cors());
 const port = process.env.PORT;
 
 app.use("/user", user);
+app.use("/market", market);
 
 app.listen(port, () => console.log(`server listening on port ${port}`));

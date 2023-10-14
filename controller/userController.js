@@ -5,6 +5,7 @@ import hashPassword from "../middleware/hashPassword.js";
 import { MESSAGE } from "../helpers/message.helper.js";
 import generateOtp from "../utils/generateOtp.js";
 import Fast2SendOtp from "../utils/Fast2SendOtp.js";
+import validateFields from "../middleware/validateFields.js";
 const { send200, send403, send400, send401, send404, send500 } = responseHelper;
 
 const register = async (req, res) => {
@@ -57,12 +58,13 @@ const sendOtp = async (req, res) => {
   const { phoneNumber } = req.body;
   const userId = req.user._id;
   try {
-    if (!phoneNumber) {
+    if (!phoneNumber || !validateFields.validatePhoneNumber(phoneNumber)) {
       return send400(res, {
         status: false,
         message: MESSAGE.INVALID_NUMBER,
       });
     }
+
     const userNumber = await User.findOne({ phoneNumber });
     if (userNumber) {
       return send400(res, {
@@ -77,7 +79,6 @@ const sendOtp = async (req, res) => {
         $set: {
           otp: newOtp,
           new: true,
-          phoneNumber,
         },
       }
     );

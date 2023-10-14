@@ -17,4 +17,10 @@ export const MESSAGE = {
   USER_NOT_FOUND: "User not found",
   PHONE_EXISTS: "Number already in use",
   LOGIN_ERROR: "Invalid email or password",
+  SYMBOL_EMPTY: "Symbol could not be empty",
+  SYMBOL_ADDED: "Symbol added successfully",
+  SYMBOL_ALREADY_EXISTS: "Symbol already exists",
+  WATCH_LIST_DATA: "Watch list data",
+  SYMBOL_REMOVED: "Symbol removed successfully",
+  SYMBOL_NOT_FOUND: "Symbol not found",
 };
