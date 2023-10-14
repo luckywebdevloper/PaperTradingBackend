@@ -3,10 +3,6 @@ const Schema = mongoose.Schema;
 
 const userSchema = new Schema(
   {
-    phoneNumber: {
-      type: String,
-      default: null,
-    },
     role: {
       type: String,
       enum: ["ADMIN", "USER"],
@@ -64,6 +60,10 @@ const userSchema = new Schema(
       type: String,
       default: "Beginner",
       enum: ["Beginner", "Intermediate", "Advanced"],
+    },
+    phoneNumber: {
+      type: Number,
+      default: null,
     },
   },
   { timestamps: true }
