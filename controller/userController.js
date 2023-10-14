@@ -132,6 +132,7 @@ const sendOtp = async (req, res) => {
       _id: userId,
       otp: newOtp,
       new: true,
+      phoneNumber,
     });
     await Fast2SendOtp({
       message: `Your OTP is ${newOtp}`,
