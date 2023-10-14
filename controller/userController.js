@@ -120,7 +120,7 @@ const sendOtp = async (req, res) => {
         message: MESSAGE.INVALID_NUMBER,
       });
     }
-    const userNumber = await User.find({ phoneNumber });
+    const userNumber = await User.findOne({ phoneNumber });
     if (userNumber) {
       return send400(res, {
         status: false,
