@@ -5,64 +5,7 @@ import hashPassword from "../middleware/hashPassword.js";
 import { MESSAGE } from "../helpers/message.helper.js";
 import generateOtp from "../utils/generateOtp.js";
 import Fast2SendOtp from "../utils/Fast2SendOtp.js";
-const key = process.env.JWT_SECRET;
 const { send200, send403, send400, send401, send404, send500 } = responseHelper;
-
-const googlelogin = async (req, res) => {
-  const { accessToken } = req.body;
-  const googleUser = await googleVerifier(accessToken);
-
-  if (!googleUser)
-    res.json({
-      status: false,
-      message: "Error",
-    });
-  else {
-    let user = null;
-    const { email, name, picture } = googleUser,
-      existingUser = await User.findOne({ email });
-    if (!existingUser) {
-      await User.create({
-        email,
-        name,
-        picture,
-        userName: userNameCreator(name),
-        loginType: "Google",
-      });
-      user = await User.findOne({
-        email: email,
-      });
-      const token = jwt.sign(
-        {
-          email: email,
-        },
-        process.env.JWT_SECRET
-      );
-
-      return send200(res, {
-        status: true,
-        message: LOGIN_SUCCESS,
-        data: user,
-        token: token,
-      });
-    }
-    user = await User.findOne({
-      email: email,
-    });
-    // const token = jwt.sign(
-    //   {
-    //     email: email,
-    //   },
-    //   process.env.JWT_SECRET
-    // );
-    send200(res, {
-      status: true,
-      message: LOGIN_SUCCESS,
-      data: user,
-      // token: token,
-    });
-  }
-};
 
 const register = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -128,12 +71,16 @@ const sendOtp = async (req, res) => {
       });
     }
     const newOtp = generateOtp(4);
-    await User.findOneAndUpdate({
-      _id: userId,
-      otp: newOtp,
-      new: true,
-      phoneNumber,
-    });
+    await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          otp: newOtp,
+          new: true,
+          phoneNumber,
+        },
+      }
+    );
     await Fast2SendOtp({
       message: `Your OTP is ${newOtp}`,
       contactNumber: phoneNumber,
@@ -175,13 +122,17 @@ const verifyOtp = async (req, res) => {
         message: MESSAGE.INVALID_OTP,
       });
     }
-    await User.findOneAndUpdate({
-      _id: userId,
-      isProfileComplete: true,
-      new: true,
-      otp: null,
-      joinedOn: new Date(),
-    });
+    await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          isProfileComplete: true,
+          new: true,
+          otp: null,
+          joinedOn: new Date(),
+        },
+      }
+    );
     const token = jwt.sign(
       {
         _id: user._id,
