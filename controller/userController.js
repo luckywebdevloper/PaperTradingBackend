@@ -130,7 +130,7 @@ const verifyOtp = async (req, res) => {
         message: MESSAGE.INVALID_OTP,
       });
     }
-    const data = await User.findOneAndUpdate(
+    await User.findOneAndUpdate(
       { _id: userId },
       {
         $set: {
@@ -142,6 +142,7 @@ const verifyOtp = async (req, res) => {
         },
       }
     );
+    const data = await User.findOne({ _id: userId });
     const token = jwt.sign(
       {
         _id: user._id,
