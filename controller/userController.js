@@ -56,6 +56,7 @@ const register = async (req, res) => {
 };
 const sendOtp = async (req, res) => {
   const { phoneNumber } = req.body;
+
   const userId = req.user._id;
   try {
     if (!phoneNumber || !validateFields.validatePhoneNumber(phoneNumber)) {
@@ -65,12 +66,17 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    const userNumber = await User.findOne({ phoneNumber });
-    if (userNumber) {
-      return send400(res, {
-        status: false,
-        message: MESSAGE.PHONE_EXISTS,
-      });
+    const userData = await User.findOne({ phoneNumber });
+    if (userData) {
+      if (
+        userData.phoneNumber === phoneNumber &&
+        userData.isPhoneNumberVerified
+      ) {
+        return send400(res, {
+          status: false,
+          message: MESSAGE.PHONE_EXISTS,
+        });
+      }
     }
     const newOtp = generateOtp(4);
     await User.findOneAndUpdate(
@@ -79,11 +85,12 @@ const sendOtp = async (req, res) => {
         $set: {
           otp: newOtp,
           new: true,
+          phoneNumber,
         },
       }
     );
     await Fast2SendOtp({
-      message: `Your OTP is ${newOtp}`,
+      message: `Your OTP for Stockology is ${newOtp}`,
       contactNumber: phoneNumber,
     });
     return send200(res, {
@@ -123,7 +130,7 @@ const verifyOtp = async (req, res) => {
         message: MESSAGE.INVALID_OTP,
       });
     }
-    await User.findOneAndUpdate(
+    const data = await User.findOneAndUpdate(
       { _id: userId },
       {
         $set: {
@@ -131,6 +138,7 @@ const verifyOtp = async (req, res) => {
           new: true,
           otp: null,
           joinedOn: new Date(),
+          isPhoneNumberVerified: true,
         },
       }
     );
@@ -145,7 +153,7 @@ const verifyOtp = async (req, res) => {
       status: true,
       token: token,
       message: MESSAGE.PHONE_VERIFICATION,
-      data: user,
+      data,
     });
   } catch (error) {
     return send400(res, {

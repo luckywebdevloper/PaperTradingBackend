@@ -65,6 +65,10 @@ const userSchema = new Schema(
       type: Number,
       default: null,
     },
+    isPhoneNumberVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
