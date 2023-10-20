@@ -12,7 +12,7 @@ const watchListSchema = new Schema(
       default: null,
     },
     totalAmount: {
-      type: String,
+      type: Number,
       default: null,
     },
     stockType: {
@@ -24,7 +24,7 @@ const watchListSchema = new Schema(
       type: String,
       default: null,
     },
-    deliveryType: {
+    type: {
       type: String,
       default: null,
       enum: ["DELIVERY", "INTRADAY"],
@@ -33,9 +33,34 @@ const watchListSchema = new Schema(
       type: Number,
       default: 0,
     },
-    triggerPrice: {
+    targetPrice: {
       type: Number,
-      default: 0,
+      default: null,
+    },
+    stockPrice: {
+      type: Number,
+      default: null,
+    },
+    stopPrice: {
+      type: Number,
+      default: null,
+    },
+    status: {
+      type: String,
+      default: null,
+      enum: ["BUY", "SELL", "SQUARE_OFF"],
+    },
+    netProfitAndLoss: {
+      type: Number,
+      default: null,
+    },
+    soldDate: {
+      type: Date,
+      default: null,
+    },
+    buyDate: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }
