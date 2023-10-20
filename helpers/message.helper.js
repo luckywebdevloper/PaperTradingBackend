@@ -23,4 +23,6 @@ export const MESSAGE = {
   WATCH_LIST_DATA: "Watch list data",
   SYMBOL_REMOVED: "Symbol removed successfully",
   SYMBOL_NOT_FOUND: "Symbol not found",
+  BOUGHT_STOCK: "Stock bought successfully!",
+  BOUGHT_STOCK_FAILED: "Failed to buy this stock",
 };
