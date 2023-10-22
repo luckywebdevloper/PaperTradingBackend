@@ -8,7 +8,8 @@ const {
   removeWatchListItem,
   buy,
   getMyStocks,
-  sell,
+  squareOff,
+  getMyStockHistory,
 } = marketController;
 
 router.post("/addtowatchlist", verifyToken, addToWatchList);
@@ -16,6 +17,7 @@ router.get("/getwatchlist/:page?", verifyToken, getWatchList);
 router.delete("/removewatchlistitem/:id", verifyToken, removeWatchListItem);
 router.post("/buy", verifyToken, buy);
 router.get("/getmystocks/:type?", verifyToken, getMyStocks);
-router.post("/sell", verifyToken, sell);
+router.post("/squareoff", verifyToken, squareOff);
+router.get("/getmystockhistory", verifyToken, getMyStockHistory);
 
 export default router;

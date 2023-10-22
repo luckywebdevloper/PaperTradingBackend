@@ -48,7 +48,7 @@ const watchListSchema = new Schema(
     status: {
       type: String,
       default: null,
-      enum: ["BUY", "SELL", "SQUARE_OFF"],
+      enum: ["BUY", "SELL"],
     },
     netProfitAndLoss: {
       type: Number,
@@ -59,6 +59,14 @@ const watchListSchema = new Schema(
       default: null,
     },
     buyDate: {
+      type: Date,
+      default: null,
+    },
+    squareOff: {
+      type: Boolean,
+      default: false,
+    },
+    squareOffDate: {
       type: Date,
       default: null,
     },

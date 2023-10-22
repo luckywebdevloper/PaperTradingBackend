@@ -25,8 +25,10 @@ export const MESSAGE = {
   SYMBOL_NOT_FOUND: "Symbol not found",
   BOUGHT_STOCK: "Stock bought successfully!",
   BOUGHT_STOCK_FAILED: "Failed to buy this stock",
-  USER_STOCK_DATA: "User stock data",
+  USER_STOCK_DATA: "My stock data",
   USER_STOCK_DATA_NOT_FOUND: "User stock data not found",
   SELL_STOCK: "Stock sold!",
   QUANTITY_ERROR: "Cannot sell more than existing quantity",
+  STOCK_SQUARE_OFF: "Stock squared off",
+  ALREADY_SQUARED: "Stock Already squared off!",
 };
