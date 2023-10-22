@@ -2,7 +2,7 @@ import watchList from "../models/watchList.models.js";
 import User from "../models/user.models.js";
 import responseHelper from "../helpers/response.helper.js";
 import { MESSAGE } from "../helpers/message.helper.js";
-import Stock from "../models/Stock.models.js";
+import Stock from "../models/stock.models.js";
 const { send200, send201, send403, send400, send401, send404, send500 } =
   responseHelper;
 
