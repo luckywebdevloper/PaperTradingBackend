@@ -110,6 +110,7 @@ const buy = async (req, res) => {
     quantity,
     targetPrice,
     stockPrice,
+    stopPrice,
   } = req.body;
   const userId = req.user._id;
   try {
@@ -121,7 +122,8 @@ const buy = async (req, res) => {
         stockType ||
         type ||
         quantity ||
-        stockPrice
+        stockPrice ||
+        stopPrice
       )
     ) {
       return send400(res, {
@@ -150,6 +152,7 @@ const buy = async (req, res) => {
       stockPrice,
       buyDate: new Date(),
       status: "BUY",
+      stopPrice,
     });
     const data = await newStock.save();
     return send201(res, {
