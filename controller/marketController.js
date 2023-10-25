@@ -3,12 +3,31 @@ import User from "../models/user.models.js";
 import responseHelper from "../helpers/response.helper.js";
 import { MESSAGE } from "../helpers/message.helper.js";
 import Stock from "../models/stock.models.js";
+import Queues from "../utils/queues.js";
+import { nseData } from "nse-data";
+import { getLTP } from "nse-quotes-api";
+import getStockPrice from "../utils/getStockPrice.js";
 const { send200, send201, send403, send400, send401, send404, send500 } =
   responseHelper;
 
 const addToWatchList = async (req, res) => {
   const { symbol } = req.body;
   const userId = req.user._id;
+
+  // Queues.initiateUserCheck(500, 10000);
+  // try {
+  //   // const data = getLTP("SBIN");
+  //   const data = await getStockPrice("SBIN");
+  //   return send200(res, {
+  //     status: true,
+  //     data,
+  //   });
+  // } catch (error) {
+  //   return send400(res, {
+  //     status: false,
+  //     error: error,
+  //   });
+  // }
   try {
     if (!symbol) {
       return send400(res, {
@@ -297,6 +316,21 @@ const getMyStockHistory = async (req, res) => {
   }
 };
 
+const getStockDataTest = async (req, res) => {
+  try {
+    const data = await getStockPrice("SBIN");
+    return send200(res, {
+      status: true,
+      data,
+    });
+  } catch (error) {
+    return send400(res, {
+      status: false,
+      error: error,
+    });
+  }
+};
+
 const marketController = {
   addToWatchList,
   getWatchList,
@@ -305,6 +339,7 @@ const marketController = {
   getMyStocks,
   squareOff,
   getMyStockHistory,
+  getStockDataTest,
 };
 
 export default marketController;
