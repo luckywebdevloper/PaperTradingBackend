@@ -41,7 +41,7 @@ const watchListSchema = new Schema(
       type: Number,
       default: null,
     },
-    stopPrice: {
+    stopLoss: {
       type: Number,
       default: null,
     },
@@ -69,6 +69,18 @@ const watchListSchema = new Schema(
     squareOffDate: {
       type: Date,
       default: null,
+    },
+    intervalId: {
+      type: String,
+      default: null,
+    },
+    executed: {
+      type: Boolean,
+      default: false,
+    },
+    failed: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

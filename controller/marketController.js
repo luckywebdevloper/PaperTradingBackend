@@ -7,6 +7,7 @@ import Queues from "../utils/queues.js";
 import { nseData } from "nse-data";
 import { getLTP } from "nse-quotes-api";
 import getStockPrice from "../utils/getStockPrice.js";
+import isBetween915AMAnd320PM from "../middleware/constants.js";
 const { send200, send201, send403, send400, send401, send404, send500 } =
   responseHelper;
 
@@ -127,9 +128,8 @@ const buy = async (req, res) => {
     stockType,
     type,
     quantity,
-    targetPrice,
     stockPrice,
-    stopPrice,
+    stopLoss,
   } = req.body;
   const userId = req.user._id;
   try {
@@ -142,7 +142,7 @@ const buy = async (req, res) => {
         type ||
         quantity ||
         stockPrice ||
-        stopPrice
+        stopLoss
       )
     ) {
       return send400(res, {
@@ -150,7 +150,76 @@ const buy = async (req, res) => {
         message: MESSAGE.FIELDS_REQUIRED,
       });
     }
+    const isValidTime = isBetween915AMAnd320PM();
     const userData = await User.findOne({ _id: userId });
+    if (type === "INTRADAY") {
+      if (!isValidTime) {
+        return send400(res, {
+          status: false,
+          message: MESSAGE.ITRADAY_ERROR,
+        });
+      }
+      if (stockType === "LMT") {
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          buyDate: new Date(),
+          status: "BUY",
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.intradayWithoutStop(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "SL") {
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          buyDate: new Date(),
+          status: "BUY",
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId, stopLoss };
+        Queues.intradayWithStop(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+    }
     await User.findOneAndUpdate(
       { _id: userId },
       {
@@ -171,7 +240,7 @@ const buy = async (req, res) => {
       stockPrice,
       buyDate: new Date(),
       status: "BUY",
-      stopPrice,
+      stopLoss,
     });
     const data = await newStock.save();
     return send201(res, {
@@ -270,18 +339,14 @@ const getMyStocks = async (req, res) => {
     let data = [];
     data = StocksData;
     if (type === "pending") {
-      data = StocksData.filter(
-        (stock) => stock.type === "INTRADAY" && !stock.squareOff
-      );
+      data = StocksData.filter((stock) => !stock.executed && !stock.squareOff);
     }
     if (type === "executed" || type === "trades") {
-      data = StocksData.filter(
-        (stock) => stock.type === "DELIVERY" && !stock.squareOff
-      );
+      data = StocksData.filter((stock) => stock.executed && !stock.squareOff);
     }
-    // if (type === 'others') {
-    //    data = StocksData.filter((stock) => stock.type === "DELIVERY");
-    // }
+    if (type === "failed") {
+      data = StocksData.filter((stock) => stock.failed && !stock.squareOff);
+    }
     return send200(res, {
       status: true,
       message: MESSAGE.USER_STOCK_DATA,
@@ -317,11 +382,18 @@ const getMyStockHistory = async (req, res) => {
 };
 
 const getStockDataTest = async (req, res) => {
+  const { id } = req.body;
   try {
-    const data = await getStockPrice("SBIN");
+    const stockData = await Stock.findOne({ _id: id });
+    Queues.initiateUserCheck({
+      stopLoss: stockData.stockPrice,
+      symbol: stockData.symbol,
+      id,
+      userId: stockData.userId,
+    });
     return send200(res, {
       status: true,
-      data,
+      message: "Queue running",
     });
   } catch (error) {
     return send400(res, {

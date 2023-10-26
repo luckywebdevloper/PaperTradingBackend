@@ -31,4 +31,7 @@ export const MESSAGE = {
   QUANTITY_ERROR: "Cannot sell more than existing quantity",
   STOCK_SQUARE_OFF: "Stock squared off",
   ALREADY_SQUARED: "Stock Already squared off!",
+  ADDED_IN_QUEUE:
+    "Stock added in queue!, will be bought once it matches the given price else will be bought at 3:20 PM IST",
+  ITRADAY_ERROR: "Intraday is only available from 9:15 AM to 3:20 PM",
 };
