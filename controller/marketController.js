@@ -15,20 +15,6 @@ const addToWatchList = async (req, res) => {
   const { symbol } = req.body;
   const userId = req.user._id;
 
-  // Queues.initiateUserCheck(500, 10000);
-  // try {
-  //   // const data = getLTP("SBIN");
-  //   const data = await getStockPrice("SBIN");
-  //   return send200(res, {
-  //     status: true,
-  //     data,
-  //   });
-  // } catch (error) {
-  //   return send400(res, {
-  //     status: false,
-  //     error: error,
-  //   });
-  // }
   try {
     if (!symbol) {
       return send400(res, {
