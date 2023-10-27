@@ -8,14 +8,14 @@ const activeProcesses = {};
 
 const int = 60000;
 
-const oneHourInterval = 10000;
+const oneHourInterval = 60 * 60 * 1000;
 
 const checkPrice = async (symbol) => {
   const data = await getStockPrice(symbol);
   return data.chart.result[0].meta.regularMarketPrice;
 };
 
-async function intradayWithoutStopLoss(data) {
+const intradayWithLMT = async (data) => {
   const { symbol, id, userId } = data;
   let matched = false;
 
@@ -25,73 +25,73 @@ async function intradayWithoutStopLoss(data) {
       const stockData = await Stock.findById(id);
       const isValidTime = isBetween915AMAnd320PM();
       const price = await checkPrice(symbol);
-      if (!isValidTime && !matched) {
-        const totalAmount = stockData.totalAmount;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            failed: true,
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
+      if (!stockData.squareOff) {
+        if (!isValidTime && !matched) {
+          const totalAmount = stockData.totalAmount;
+          await Stock.findByIdAndUpdate(id, {
             $set: {
-              wallet: userData.wallet + totalAmount,
+              failed: true,
             },
-          }
-        );
+          });
+          await User.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                wallet: userData.wallet + totalAmount,
+              },
+            }
+          );
+          clearInterval(interval);
+          delete activeProcesses[stockData.intervalId];
+          resolve("Match not found, db updated");
+          return;
+        }
+        if (matched && !isValidTime) {
+          const totalAmount = stockData.quantity * price;
+          await Stock.findByIdAndUpdate(id, {
+            $set: {
+              stockPrice: price,
+              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              squareOff: true,
+              totalAmount,
+              squareOffDate: new Date(),
+            },
+          });
+          await User.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
+              },
+            }
+          );
+          clearInterval(interval);
+          delete activeProcesses[stockData.intervalId];
+          resolve("Position squared off, db updated");
+          return;
+        }
+        if (price === stockData.stockPrice && !matched) {
+          const totalAmount = stockData.quantity * price;
+          matched = true;
+          await Stock.findByIdAndUpdate(id, {
+            $set: {
+              stockPrice: price,
+              netProfitAndLoss: stockData.stockPrice - price,
+              totalAmount,
+              executed: true,
+              buyDate: new Date(),
+            },
+          });
+          // clearInterval(interval);
+          // delete activeProcesses[stockData.intervalId];
+          resolve("Match found, db updated");
+          return;
+        }
+      } else {
         clearInterval(interval);
         delete activeProcesses[stockData.intervalId];
-        resolve("Match not found, db updated");
-        return;
-      }
-      if (matched && !isValidTime) {
-        const totalAmount = stockData.quantity * price;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            stockPrice: price,
-            netProfitAndLoss: stockData.totalAmount - totalAmount,
-            squareOff: true,
-            totalAmount,
-            squareOffDate: new Date(),
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
-            $set: {
-              wallet: userData.wallet + totalAmount,
-            },
-          }
-        );
-        clearInterval(interval);
-        delete activeProcesses[stockData.intervalId];
-        resolve("Position squared off, db updated");
-        return;
-      }
-      if (price === stockData.stockPrice && !matched) {
-        const totalAmount = stockData.quantity * price;
-        matched = true;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            stockPrice: price,
-            netProfitAndLoss: stockData.stockPrice - price,
-            totalAmount,
-            executed: true,
-            buyDate: new Date(),
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
-            $set: {
-              wallet: userData.wallet - totalAmount,
-            },
-          }
-        );
-        // clearInterval(interval);
-        // delete activeProcesses[stockData.intervalId];
-        resolve("Match found, db updated");
+        resolve("Already squared off");
         return;
       }
     }, int);
@@ -107,9 +107,9 @@ async function intradayWithoutStopLoss(data) {
 
     return { intervalId };
   });
-}
+};
 
-async function intradayWithMKT(data) {
+const intradayWithMKT = async (data) => {
   const { symbol, id, userId } = data;
 
   return new Promise(async (resolve, reject) => {
@@ -135,6 +135,7 @@ async function intradayWithMKT(data) {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
               },
             }
           );
@@ -162,9 +163,9 @@ async function intradayWithMKT(data) {
 
     return { intervalId };
   });
-}
+};
 
-async function intradayWithStopLoss(data) {
+const intradayWithSL = async (data) => {
   const { stopLoss, symbol, id, userId } = data;
   let stopLossStatus = false;
   let matched = false;
@@ -175,129 +176,8 @@ async function intradayWithStopLoss(data) {
       const stockData = await Stock.findById(id);
       const price = await checkPrice(symbol);
       const isValidTime = isBetween915AMAnd320PM();
-      if (!isValidTime && !matched) {
-        const totalAmount = stockData.totalAmount;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            failed: true,
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
-            $set: {
-              wallet: userData.wallet + totalAmount,
-            },
-          }
-        );
-        clearInterval(interval);
-        delete activeProcesses[stockData.intervalId];
-        resolve("Match not found, db updated");
-        return;
-      }
-      if (price === stockData.stockPrice && !stopLossStatus) {
-        stopLossStatus = true;
-        const totalAmount = stockData.quantity * price;
-        matched = true;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            stockPrice: price,
-            netProfitAndLoss: stockData.stockPrice - price,
-            totalAmount,
-            executed: true,
-            buyDate: new Date(),
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
-            $set: {
-              wallet: userData.wallet - totalAmount,
-            },
-          }
-        );
-        // clearInterval(interval);
-        // delete activeProcesses[stockData.intervalId];
-        resolve("Match found, db updated");
-        return;
-      }
-      if (stopLossStatus && stopLoss === price && isValidTime) {
-        const totalAmount = stockData.quantity * price;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            stockPrice: price,
-            netProfitAndLoss: stockData.totalAmount - totalAmount,
-            squareOff: true,
-            totalAmount,
-            squareOffDate: new Date(),
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
-            $set: {
-              wallet: userData.wallet + totalAmount,
-            },
-          }
-        );
-        clearInterval(interval);
-        delete activeProcesses[stockData.intervalId];
-        resolve("Position squared off, db updated");
-        return;
-      }
-      if (stopLossStatus && !isValidTime) {
-        const totalAmount = stockData.quantity * price;
-        await Stock.findByIdAndUpdate(id, {
-          $set: {
-            stockPrice: price,
-            netProfitAndLoss: stockData.totalAmount - totalAmount,
-            squareOff: true,
-            totalAmount,
-            squareOffDate: new Date(),
-          },
-        });
-        await User.findOneAndUpdate(
-          { _id: userId },
-          {
-            $set: {
-              wallet: userData.wallet + totalAmount,
-            },
-          }
-        );
-        clearInterval(interval);
-        delete activeProcesses[stockData.intervalId];
-        resolve("Position squared off, db updated");
-        return;
-      }
-    }, int);
-
-    const intervalId = Date.now();
-    activeProcesses[intervalId] = interval;
-
-    await Stock.findByIdAndUpdate(id, {
-      $set: {
-        intervalId,
-      },
-    });
-
-    return { intervalId };
-  });
-}
-async function deliveryWithSL(data) {
-  const { stopLoss, symbol, id, userId } = data;
-  let stopLossStatus = false;
-  let matched = false;
-
-  return new Promise(async (resolve, reject) => {
-    const interval = setInterval(async () => {
-      const userData = await User.findOne({ _id: userId });
-      const stockData = await Stock.findById(id);
-      const price = await checkPrice(symbol);
-      const isValidTime = isBeforeGivenDay(stockData.toSquareOffOn);
       if (!stockData.squareOff) {
-        console.log("1");
         if (!isValidTime && !matched) {
-          console.log("2");
           const totalAmount = stockData.totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
@@ -318,7 +198,6 @@ async function deliveryWithSL(data) {
           return;
         }
         if (price === stockData.stockPrice && !stopLossStatus) {
-          console.log("3");
           stopLossStatus = true;
           const totalAmount = stockData.quantity * price;
           matched = true;
@@ -331,21 +210,12 @@ async function deliveryWithSL(data) {
               buyDate: new Date(),
             },
           });
-          await User.findOneAndUpdate(
-            { _id: userId },
-            {
-              $set: {
-                wallet: userData.wallet - totalAmount,
-              },
-            }
-          );
           // clearInterval(interval);
           // delete activeProcesses[stockData.intervalId];
           resolve("Match found, db updated");
           return;
         }
         if (stopLossStatus && stopLoss === price && isValidTime) {
-          console.log("4");
           const totalAmount = stockData.quantity * price;
           await Stock.findByIdAndUpdate(id, {
             $set: {
@@ -361,6 +231,7 @@ async function deliveryWithSL(data) {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
               },
             }
           );
@@ -370,7 +241,6 @@ async function deliveryWithSL(data) {
           return;
         }
         if (stopLossStatus && !isValidTime) {
-          console.log("5");
           const totalAmount = stockData.quantity * price;
           await Stock.findByIdAndUpdate(id, {
             $set: {
@@ -386,6 +256,7 @@ async function deliveryWithSL(data) {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
               },
             }
           );
@@ -395,7 +266,127 @@ async function deliveryWithSL(data) {
           return;
         }
       } else {
-        console.log("6");
+        clearInterval(interval);
+        delete activeProcesses[stockData.intervalId];
+        resolve("Already squared off");
+        return;
+      }
+    }, int);
+
+    const intervalId = Date.now();
+    activeProcesses[intervalId] = interval;
+
+    await Stock.findByIdAndUpdate(id, {
+      $set: {
+        intervalId,
+      },
+    });
+
+    return { intervalId };
+  });
+};
+
+const deliveryWithSL = async (data) => {
+  const { stopLoss, symbol, id, userId } = data;
+  let stopLossStatus = false;
+  let matched = false;
+
+  return new Promise(async (resolve, reject) => {
+    const interval = setInterval(async () => {
+      const userData = await User.findOne({ _id: userId });
+      const stockData = await Stock.findById(id);
+      const price = await checkPrice(symbol);
+      const isValidTime = isBeforeGivenDay(stockData.toSquareOffOn);
+      if (!stockData.squareOff) {
+        if (!isValidTime && !matched) {
+          const totalAmount = stockData.totalAmount;
+          await Stock.findByIdAndUpdate(id, {
+            $set: {
+              failed: true,
+            },
+          });
+          await User.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                wallet: userData.wallet + totalAmount,
+              },
+            }
+          );
+          clearInterval(interval);
+          delete activeProcesses[stockData.intervalId];
+          resolve("Match not found, db updated");
+          return;
+        }
+        if (price === stockData.stockPrice && !stopLossStatus) {
+          stopLossStatus = true;
+          const totalAmount = stockData.quantity * price;
+          matched = true;
+          await Stock.findByIdAndUpdate(id, {
+            $set: {
+              stockPrice: price,
+              netProfitAndLoss: stockData.stockPrice - price,
+              totalAmount,
+              executed: true,
+              buyDate: new Date(),
+            },
+          });
+          // clearInterval(interval);
+          // delete activeProcesses[stockData.intervalId];
+          resolve("Match found, db updated");
+          return;
+        }
+        if (stopLossStatus && stopLoss === price && isValidTime) {
+          const totalAmount = stockData.quantity * price;
+          await Stock.findByIdAndUpdate(id, {
+            $set: {
+              stockPrice: price,
+              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              squareOff: true,
+              totalAmount,
+              squareOffDate: new Date(),
+            },
+          });
+          await User.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
+              },
+            }
+          );
+          clearInterval(interval);
+          delete activeProcesses[stockData.intervalId];
+          resolve("Position squared off, db updated");
+          return;
+        }
+        if (stopLossStatus && !isValidTime) {
+          const totalAmount = stockData.quantity * price;
+          await Stock.findByIdAndUpdate(id, {
+            $set: {
+              stockPrice: price,
+              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              squareOff: true,
+              totalAmount,
+              squareOffDate: new Date(),
+            },
+          });
+          await User.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
+              },
+            }
+          );
+          clearInterval(interval);
+          delete activeProcesses[stockData.intervalId];
+          resolve("Position squared off, db updated");
+          return;
+        }
+      } else {
         clearInterval(interval);
         delete activeProcesses[stockData.intervalId];
         resolve("Already squared off");
@@ -414,7 +405,7 @@ async function deliveryWithSL(data) {
 
     return { intervalId };
   });
-}
+};
 
 const deliveryWithMKT = async (data) => {
   const { symbol, id, userId } = data;
@@ -442,6 +433,7 @@ const deliveryWithMKT = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
               },
             }
           );
@@ -507,6 +499,7 @@ const deliveryWithLMT = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
+                overallProfit: userData.overallProfit + totalAmount,
               },
             }
           );
@@ -527,14 +520,6 @@ const deliveryWithLMT = async (data) => {
               buyDate: new Date(),
             },
           });
-          await User.findOneAndUpdate(
-            { _id: userId },
-            {
-              $set: {
-                wallet: userData.wallet - totalAmount,
-              },
-            }
-          );
           // clearInterval(interval);
           // delete activeProcesses[stockData.intervalId];
           resolve("Match found, db updated");
@@ -561,9 +546,9 @@ const deliveryWithLMT = async (data) => {
   });
 };
 
-const intradayWithoutStop = async (data) => {
+const intradayLMT = async (data) => {
   try {
-    const result = await intradayWithoutStopLoss(data);
+    const result = await intradayWithLMT(data);
 
     console.log(result);
     // You can clear the interval from anywhere in your code using its ID
@@ -574,9 +559,9 @@ const intradayWithoutStop = async (data) => {
   }
 };
 
-const intradayWithStop = async (data) => {
+const intradaySL = async (data) => {
   try {
-    const result = await intradayWithStopLoss(data);
+    const result = await intradayWithSL(data);
 
     console.log(result);
     // You can clear the interval from anywhere in your code using its ID
@@ -625,6 +610,7 @@ const deliveryLMT = async (data) => {
     console.error(error);
   }
 };
+
 const deliverySL = async (data) => {
   try {
     const result = await deliveryWithSL(data);
@@ -639,8 +625,8 @@ const deliverySL = async (data) => {
 };
 
 const Queues = {
-  intradayWithoutStop,
-  intradayWithStop,
+  intradayLMT,
+  intradaySL,
   intradayMKT,
   deliveryMKT,
   deliveryLMT,

@@ -34,4 +34,8 @@ export const MESSAGE = {
   ADDED_IN_QUEUE:
     "Stock added in queue!, will be bought once it matches the given price else amount will be refunded",
   ITRADAY_ERROR: "Intraday is only available from 9:15 AM to 3:20 PM",
+  INSUFFICIENT_FUNDS: "Insufficient funds",
+  NOT_EXECUTED: "Stock not executed yet. Cannot sqaure off!",
+  OUT_OF_TIME_SQUARE: "Cannot sqaure off because the intraday time has passed",
+  INVALID_STOCK: "Invalid stock",
 };

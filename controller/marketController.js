@@ -41,7 +41,7 @@ const addToWatchList = async (req, res) => {
       data,
     });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
       status: false,
       message: error.message,
     });
@@ -76,7 +76,7 @@ const getWatchList = async (req, res) => {
       data: watchListData || [],
     });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
       status: false,
       message: error.message,
     });
@@ -100,7 +100,7 @@ const removeWatchListItem = async (req, res) => {
       message: MESSAGE.SYMBOL_REMOVED,
     });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
       status: false,
       message: error.message,
     });
@@ -121,24 +121,34 @@ const buy = async (req, res) => {
   const userId = req.user._id;
   try {
     if (
-      !(
-        stockName ||
-        symbol ||
-        totalAmount ||
-        stockType ||
-        type ||
-        quantity ||
-        stockPrice ||
-        stopLoss
-      )
+      !stockName ||
+      !symbol ||
+      !totalAmount ||
+      !stockType ||
+      !type ||
+      !quantity ||
+      !stockPrice
     ) {
       return send400(res, {
         status: false,
         message: MESSAGE.FIELDS_REQUIRED,
       });
     }
+    if (stockType === "SL" && !stopLoss) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.FIELDS_REQUIRED,
+      });
+    }
+
     const isValidTime = isBetween915AMAnd320PM();
     const userData = await User.findOne({ _id: userId });
+    if (totalAmount > userData.wallet) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.INSUFFICIENT_FUNDS,
+      });
+    }
     if (type === "INTRADAY") {
       if (!isValidTime) {
         return send400(res, {
@@ -166,6 +176,7 @@ const buy = async (req, res) => {
           {
             $set: {
               wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
             },
           }
         );
@@ -196,11 +207,12 @@ const buy = async (req, res) => {
           {
             $set: {
               wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
             },
           }
         );
         const checkData = { symbol, id: data._id, userId };
-        Queues.intradayWithoutStop(checkData);
+        Queues.intradayLMT(checkData);
         return send200(res, {
           status: true,
           message: MESSAGE.ADDED_IN_QUEUE,
@@ -227,11 +239,12 @@ const buy = async (req, res) => {
           {
             $set: {
               wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
             },
           }
         );
         const checkData = { symbol, id: data._id, userId, stopLoss };
-        Queues.intradayWithStop(checkData);
+        Queues.intradaySL(checkData);
         return send200(res, {
           status: true,
           message: MESSAGE.ADDED_IN_QUEUE,
@@ -261,6 +274,7 @@ const buy = async (req, res) => {
           {
             $set: {
               wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
             },
           }
         );
@@ -293,6 +307,7 @@ const buy = async (req, res) => {
           {
             $set: {
               wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
             },
           }
         );
@@ -326,6 +341,7 @@ const buy = async (req, res) => {
           {
             $set: {
               wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
             },
           }
         );
@@ -338,36 +354,263 @@ const buy = async (req, res) => {
         });
       }
     }
-    await User.findOneAndUpdate(
-      { _id: userId },
-      {
-        $set: {
-          wallet: userData.wallet - totalAmount,
-        },
-      }
-    );
-    const newStock = new Stock({
-      stockName,
-      symbol,
-      totalAmount,
-      stockType,
-      type,
-      quantity,
-      targetPrice,
-      userId,
-      stockPrice,
-      buyDate: new Date(),
-      status: "BUY",
-      stopLoss,
-    });
-    const data = await newStock.save();
-    return send201(res, {
-      status: true,
-      message: MESSAGE.BOUGHT_STOCK,
-      data,
-    });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
+      status: false,
+      message: error.message,
+    });
+  }
+};
+
+const sell = async (req, res) => {
+  const {
+    stockName,
+    symbol,
+    totalAmount,
+    stockType,
+    type,
+    quantity,
+    stockPrice,
+    stopLoss,
+  } = req.body;
+  const userId = req.user._id;
+  try {
+    if (
+      !stockName ||
+      !symbol ||
+      !totalAmount ||
+      !stockType ||
+      !type ||
+      !quantity ||
+      !stockPrice
+    ) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.FIELDS_REQUIRED,
+      });
+    }
+    if (stockType === "SL" && !stopLoss) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.FIELDS_REQUIRED,
+      });
+    }
+
+    const isValidTime = isBetween915AMAnd320PM();
+    const userData = await User.findOne({ _id: userId });
+    if (totalAmount > userData.wallet) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.INSUFFICIENT_FUNDS,
+      });
+    }
+    if (type === "INTRADAY") {
+      if (!isValidTime) {
+        return send400(res, {
+          status: false,
+          message: MESSAGE.ITRADAY_ERROR,
+        });
+      }
+      if (stockType === "MKT") {
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          soldDate: new Date(),
+          status: "SELL",
+          executed: true,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.intradayMKT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "LMT") {
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          soldDate: new Date(),
+          status: "SELL",
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.intradayLMT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "SL") {
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          soldDate: new Date(),
+          status: "SELL",
+          stopLoss,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId, stopLoss };
+        Queues.intradaySL(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+    } else {
+      if (stockType === "MKT") {
+        const nextDate = next5DayDate(new Date());
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          soldDate: new Date(),
+          status: "SELL",
+          executed: true,
+          toSquareOffOn: nextDate,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.deliveryMKT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "LMT") {
+        const nextDate = next5DayDate(new Date());
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          soldDate: new Date(),
+          status: "SELL",
+          toSquareOffOn: nextDate,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.deliveryLMT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "SL") {
+        const nextDate = next5DayDate(new Date());
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          soldDate: new Date(),
+          status: "SELL",
+          stopLoss,
+          toSquareOffOn: nextDate,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+              totalInvested: userData.totalInvested + totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId, stopLoss };
+        Queues.deliverySL(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+    }
+  } catch (error) {
+    return send500(res, {
       status: false,
       message: error.message,
     });
@@ -378,7 +621,8 @@ const squareOff = async (req, res) => {
   const { stockId, totalAmount, stockPrice } = req.body;
   const userId = req.user._id;
   try {
-    if (!(stockId || totalAmount || stockPrice)) {
+    const isValidTime = isBetween915AMAnd320PM();
+    if (!stockId || !totalAmount || !stockPrice) {
       return send400(res, {
         status: false,
         message: MESSAGE.FIELDS_REQUIRED,
@@ -391,24 +635,43 @@ const squareOff = async (req, res) => {
         message: MESSAGE.ALREADY_SQUARED,
       });
     }
+    if (!stockData.executed) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.NOT_EXECUTED,
+      });
+    }
+    if (stockData.type === "INTRADAY" && !isValidTime) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.OUT_OF_TIME_SQUARE,
+      });
+    }
+    if (stockData.failed) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.INVALID_STOCK,
+      });
+    }
     const userData = await User.findOne({ _id: userId });
-    await User.findOneAndUpdate(
-      { _id: userId },
-      {
-        $set: {
-          wallet: userData.wallet + totalAmount,
-        },
-      }
-    );
     await Stock.findOneAndUpdate(
       { _id: stockId },
       {
         $set: {
           stockPrice,
-          netProfitAndLoss: stockData.stockPrice - stockPrice,
+          netProfitAndLoss: stockData.totalAmount - totalAmount,
           squareOff: true,
           totalAmount,
           squareOffDate: new Date(),
+        },
+      }
+    );
+    await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          wallet: userData.wallet + totalAmount,
+          totalInvested: userData.totalInvested + totalAmount,
         },
       }
     );
@@ -417,7 +680,7 @@ const squareOff = async (req, res) => {
       message: MESSAGE.STOCK_SQUARE_OFF,
     });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
       status: false,
       message: error.message,
     });
@@ -426,8 +689,6 @@ const squareOff = async (req, res) => {
 
 const getMyStocks = async (req, res) => {
   const userId = req.user._id;
-  // const page = req.params.page || 1;
-  // const itemsPerPage = 10;
   const type = req.params.type;
 
   try {
@@ -449,7 +710,7 @@ const getMyStocks = async (req, res) => {
       data,
     });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
       status: false,
       message: error.message,
     });
@@ -458,9 +719,6 @@ const getMyStocks = async (req, res) => {
 
 const getMyStockHistory = async (req, res) => {
   const userId = req.user._id;
-  // const page = req.params.page || 1;
-  // const itemsPerPage = 10;
-  // const type = req.params.type
 
   try {
     const data = await Stock.find({ userId, squareOff: true });
@@ -470,31 +728,9 @@ const getMyStockHistory = async (req, res) => {
       data,
     });
   } catch (error) {
-    return send400(res, {
+    return send500(res, {
       status: false,
       message: error.message,
-    });
-  }
-};
-
-const getStockDataTest = async (req, res) => {
-  const { id } = req.body;
-  try {
-    const stockData = await Stock.findOne({ _id: id });
-    Queues.initiateUserCheck({
-      stopLoss: stockData.stockPrice,
-      symbol: stockData.symbol,
-      id,
-      userId: stockData.userId,
-    });
-    return send200(res, {
-      status: true,
-      message: "Queue running",
-    });
-  } catch (error) {
-    return send400(res, {
-      status: false,
-      error: error,
     });
   }
 };
@@ -507,7 +743,7 @@ const marketController = {
   getMyStocks,
   squareOff,
   getMyStockHistory,
-  getStockDataTest,
+  sell,
 };
 
 export default marketController;

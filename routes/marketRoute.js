@@ -10,7 +10,7 @@ const {
   getMyStocks,
   squareOff,
   getMyStockHistory,
-  getStockDataTest,
+  sell,
 } = marketController;
 
 router.post("/addtowatchlist", verifyToken, addToWatchList);
@@ -20,6 +20,6 @@ router.post("/buy", verifyToken, buy);
 router.get("/getmystocks/:type?", verifyToken, getMyStocks);
 router.post("/squareoff", verifyToken, squareOff);
 router.get("/getmystockhistory", verifyToken, getMyStockHistory);
-router.post("/getstockdatatest", getStockDataTest);
+router.get("/sell", verifyToken, sell);
 
 export default router;
