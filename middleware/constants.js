@@ -5,13 +5,13 @@ const isBetween915AMAnd320PM = () => {
   const startOfTodayIST = currentTimeIST
     .clone()
     .startOf("day")
-    .hour(0)
-    .minute(0);
+    .hour(9)
+    .minute(15);
   const endOfTodayIST = currentTimeIST
     .clone()
     .startOf("day")
-    .hour(0)
-    .minute(26);
+    .hour(15)
+    .minute(20);
 
   return currentTimeIST.isBetween(startOfTodayIST, endOfTodayIST);
 };

@@ -82,6 +82,10 @@ const watchListSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    toSquareOffOn: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

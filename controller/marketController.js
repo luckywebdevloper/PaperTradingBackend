@@ -8,6 +8,7 @@ import { nseData } from "nse-data";
 import { getLTP } from "nse-quotes-api";
 import getStockPrice from "../utils/getStockPrice.js";
 import isBetween915AMAnd320PM from "../middleware/constants.js";
+import next5DayDate from "../utils/next5DayDate.js";
 const { send200, send201, send403, send400, send401, send404, send500 } =
   responseHelper;
 
@@ -145,6 +146,37 @@ const buy = async (req, res) => {
           message: MESSAGE.ITRADAY_ERROR,
         });
       }
+      if (stockType === "MKT") {
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          buyDate: new Date(),
+          status: "BUY",
+          executed: true,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.intradayMKT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
       if (stockType === "LMT") {
         const newStock = new Stock({
           stockName,
@@ -187,6 +219,7 @@ const buy = async (req, res) => {
           stockPrice,
           buyDate: new Date(),
           status: "BUY",
+          stopLoss,
         });
         const data = await newStock.save();
         await User.findOneAndUpdate(
@@ -199,6 +232,105 @@ const buy = async (req, res) => {
         );
         const checkData = { symbol, id: data._id, userId, stopLoss };
         Queues.intradayWithStop(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+    } else {
+      if (stockType === "MKT") {
+        const nextDate = next5DayDate(new Date());
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          buyDate: new Date(),
+          status: "BUY",
+          executed: true,
+          toSquareOffOn: nextDate,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.deliveryMKT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "LMT") {
+        const nextDate = next5DayDate(new Date());
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          buyDate: new Date(),
+          status: "BUY",
+          toSquareOffOn: nextDate,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId };
+        Queues.deliveryLMT(checkData);
+        return send200(res, {
+          status: true,
+          message: MESSAGE.ADDED_IN_QUEUE,
+          data,
+        });
+      }
+      if (stockType === "SL") {
+        const nextDate = next5DayDate(new Date());
+        const newStock = new Stock({
+          stockName,
+          symbol,
+          totalAmount,
+          stockType,
+          type,
+          quantity,
+          userId,
+          stockPrice,
+          buyDate: new Date(),
+          status: "BUY",
+          stopLoss,
+          toSquareOffOn: nextDate,
+        });
+        const data = await newStock.save();
+        await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            $set: {
+              wallet: userData.wallet - totalAmount,
+            },
+          }
+        );
+        const checkData = { symbol, id: data._id, userId, stopLoss };
+        Queues.deliverySL(checkData);
         return send200(res, {
           status: true,
           message: MESSAGE.ADDED_IN_QUEUE,
@@ -253,12 +385,6 @@ const squareOff = async (req, res) => {
       });
     }
     const stockData = await Stock.findOne({ _id: stockId });
-    // if (stockData.quantity < quantity) {
-    //   return send400(res, {
-    //     status: false,
-    //     message: MESSAGE.QUANTITY_ERROR,
-    //   });
-    // }
     if (stockData.squareOff) {
       return send400(res, {
         status: false,
@@ -278,7 +404,6 @@ const squareOff = async (req, res) => {
       { _id: stockId },
       {
         $set: {
-          // quantity: stockData.quantity - quantity,
           stockPrice,
           netProfitAndLoss: stockData.stockPrice - stockPrice,
           squareOff: true,
@@ -287,21 +412,6 @@ const squareOff = async (req, res) => {
         },
       }
     );
-    // const newStock = new Stock({
-    //   stockName: stockData.stockName,
-    //   symbol: stockData.symbol,
-    //   totalAmount: totalAmount,
-    //   stockType: stockData.stockType,
-    //   type: stockData.type,
-    //   quantity: quantity,
-    //   targetPrice: stockData.targetPrice,
-    //   userId,
-    //   stockPrice,
-    //   soldDate: new Date(),
-    //   status: "SELL",
-    //   buyDate: stockData.buyDate,
-    // });
-    // await newStock.save();
     return send200(res, {
       status: true,
       message: MESSAGE.STOCK_SQUARE_OFF,
@@ -330,7 +440,7 @@ const getMyStocks = async (req, res) => {
     if (type === "executed" || type === "trades") {
       data = StocksData.filter((stock) => stock.executed && !stock.squareOff);
     }
-    if (type === "failed") {
+    if (type === "others") {
       data = StocksData.filter((stock) => stock.failed && !stock.squareOff);
     }
     return send200(res, {
