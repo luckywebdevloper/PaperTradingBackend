@@ -38,4 +38,6 @@ export const MESSAGE = {
   NOT_EXECUTED: "Stock not executed yet. Cannot sqaure off!",
   OUT_OF_TIME_SQUARE: "Cannot sqaure off because the intraday time has passed",
   INVALID_STOCK: "Invalid stock",
+  INVALID_STOCK_TYPE: "Invalid stock type",
+  INVALID_TYPE: "Invalid type",
 };

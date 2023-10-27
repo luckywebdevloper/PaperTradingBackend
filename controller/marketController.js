@@ -250,6 +250,11 @@ const buy = async (req, res) => {
           message: MESSAGE.ADDED_IN_QUEUE,
           data,
         });
+      } else {
+        return send400(res, {
+          status: true,
+          message: MESSAGE.INVALID_STOCK_TYPE,
+        });
       }
     } else {
       if (stockType === "MKT") {
@@ -351,6 +356,11 @@ const buy = async (req, res) => {
           status: true,
           message: MESSAGE.ADDED_IN_QUEUE,
           data,
+        });
+      } else {
+        return send400(res, {
+          status: true,
+          message: MESSAGE.INVALID_TYPE,
         });
       }
     }
@@ -505,6 +515,11 @@ const sell = async (req, res) => {
           message: MESSAGE.ADDED_IN_QUEUE,
           data,
         });
+      } else {
+        return send400(res, {
+          status: true,
+          message: MESSAGE.INVALID_STOCK_TYPE,
+        });
       }
     } else {
       if (stockType === "MKT") {
@@ -606,6 +621,11 @@ const sell = async (req, res) => {
           status: true,
           message: MESSAGE.ADDED_IN_QUEUE,
           data,
+        });
+      } else {
+        return send400(res, {
+          status: true,
+          message: MESSAGE.INVALID_TYPE,
         });
       }
     }
