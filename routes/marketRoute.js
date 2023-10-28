@@ -20,6 +20,6 @@ router.post("/buy", verifyToken, buy);
 router.get("/getmystocks/:type?", verifyToken, getMyStocks);
 router.post("/squareoff", verifyToken, squareOff);
 router.get("/getmystockhistory", verifyToken, getMyStockHistory);
-router.get("/sell", verifyToken, sell);
+router.post("/sell", verifyToken, sell);
 
 export default router;

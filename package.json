@@ -31,6 +31,7 @@
     "moment-timezone": "^0.5.43",
     "mongoose": "^6.5.2",
     "morgan": "^1.10.0",
+    "node-fetch": "^3.3.2",
     "nodemon": "^3.0.1",
     "nse-data": "^1.0.4",
     "nse-quotes-api": "^1.0.4",

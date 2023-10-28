@@ -1,9 +1,9 @@
-import axios from "axios";
+import fetch from "node-fetch";
 
 const getStockPrice = (symbol) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS`;
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/SBIN.NS`;
       // const url = `https://www.nseindia.com/api/quote-equity?symbol=${symbol}`;
 
       const response = await fetch(url);
