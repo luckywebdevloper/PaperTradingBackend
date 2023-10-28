@@ -405,6 +405,12 @@ const sell = async (req, res) => {
         message: MESSAGE.FIELDS_REQUIRED,
       });
     }
+    if (type !== "INTRADAY") {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.SELL_ERROR,
+      });
+    }
 
     const isValidTime = isBetween915AMAnd320PM();
     const userData = await User.findOne({ _id: userId });
