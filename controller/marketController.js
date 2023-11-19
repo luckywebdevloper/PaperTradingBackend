@@ -775,7 +775,6 @@ const decodeStockData = async (req, res) => {
       dirname(currentModulePath) + "/YPricingData.proto"
     );
     const Yaticker = root.lookupType("yaticker");
-    const buffer = Uint8Array.from(btoa(stockData));
     const data = Yaticker.decode(new Buffer(stockData, "base64"));
     return send200(res, {
       status: true,
