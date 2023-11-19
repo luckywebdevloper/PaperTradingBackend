@@ -9,6 +9,11 @@ import { getLTP } from "nse-quotes-api";
 import getStockPrice from "../utils/getStockPrice.js";
 import isBetween915AMAnd320PM from "../middleware/constants.js";
 import next5DayDate from "../utils/next5DayDate.js";
+import { Buffer } from "buffer";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import protobuf from "protobufjs";
+
 const { send200, send201, send403, send400, send401, send404, send500 } =
   responseHelper;
 
@@ -760,6 +765,30 @@ const getMyStockHistory = async (req, res) => {
     });
   }
 };
+const decodeStockData = async (req, res) => {
+  const stockData = req.body.data;
+
+  try {
+    const currentModuleURL = import.meta.url;
+    const currentModulePath = fileURLToPath(currentModuleURL);
+    const root = protobuf.loadSync(
+      dirname(currentModulePath) + "../YPricingData.proto"
+    );
+    const Yaticker = root.lookupType("yaticker");
+    const buffer = Uint8Array.from(btoa(stockData.data));
+    const data = Yaticker.decode(Buffer.from(stockData.data, "base64"));
+    return send200(res, {
+      status: true,
+      message: MESSAGE.DECODED_DATA,
+      data,
+    });
+  } catch (error) {
+    return send500(res, {
+      status: false,
+      message: error.message,
+    });
+  }
+};
 
 const marketController = {
   addToWatchList,
@@ -770,6 +799,7 @@ const marketController = {
   squareOff,
   getMyStockHistory,
   sell,
+  decodeStockData,
 };
 
 export default marketController;

@@ -41,4 +41,5 @@ export const MESSAGE = {
   INVALID_STOCK_TYPE: "Invalid stock type",
   INVALID_TYPE: "Invalid type",
   SELL_ERROR: "Sell only works in intraday",
+  DECODED_DATA: "Decoded stock data",
 };
