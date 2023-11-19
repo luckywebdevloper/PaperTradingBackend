@@ -766,17 +766,17 @@ const getMyStockHistory = async (req, res) => {
   }
 };
 const decodeStockData = async (req, res) => {
-  const stockData = req.body.data;
+  const stockData = req.body.stockData;
 
   try {
     const currentModuleURL = import.meta.url;
     const currentModulePath = fileURLToPath(currentModuleURL);
     const root = protobuf.loadSync(
-      dirname(currentModulePath) + "../YPricingData.proto"
+      dirname(currentModulePath) + "/YPricingData.proto"
     );
     const Yaticker = root.lookupType("yaticker");
-    const buffer = Uint8Array.from(btoa(stockData.data));
-    const data = Yaticker.decode(Buffer.from(stockData.data, "base64"));
+    const buffer = Uint8Array.from(btoa(stockData));
+    const data = Yaticker.decode(new Buffer(stockData, "base64"));
     return send200(res, {
       status: true,
       message: MESSAGE.DECODED_DATA,
