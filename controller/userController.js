@@ -6,6 +6,7 @@ import { MESSAGE } from "../helpers/message.helper.js";
 import generateOtp from "../utils/generateOtp.js";
 import Fast2SendOtp from "../utils/Fast2SendOtp.js";
 import validateFields from "../middleware/validateFields.js";
+import watchList from "../models/watchList.models.js";
 const { send200, send403, send400, send401, send404, send500 } = responseHelper;
 
 const register = async (req, res) => {
@@ -149,6 +150,25 @@ const verifyOtp = async (req, res) => {
       },
       process.env.JWT_SECRET
     );
+
+    const symbols = [
+      "SBIN",
+      "RELIANCE",
+      "TCS",
+      "ICICIBANK",
+      "HDFCBANK",
+      "BAJFINANCE",
+      "SUZLON",
+    ];
+
+    const watchlistObjects = symbols.map((symbol) => ({
+      symbol,
+      userId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+
+    await watchList.insertMany(watchlistObjects);
 
     res.header("auth-token", token).status(200).json({
       status: true,
