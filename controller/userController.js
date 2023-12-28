@@ -152,13 +152,13 @@ const verifyOtp = async (req, res) => {
     );
 
     const symbols = [
-      "SBIN",
-      "RELIANCE",
-      "TCS",
-      "ICICIBANK",
-      "HDFCBANK",
-      "BAJFINANCE",
-      "SUZLON",
+      "SBIN.NS",
+      "RELIANCE.NS",
+      "TCS.NS",
+      "ICICIBANK.NS",
+      "HDFCBANK.NS",
+      "BAJFINANCE.NS",
+      "SUZLON.NS",
     ];
 
     const watchlistObjects = symbols.map((symbol) => ({
