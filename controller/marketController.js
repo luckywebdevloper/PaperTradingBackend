@@ -54,8 +54,8 @@ const addToWatchList = async (req, res) => {
 };
 
 const getWatchList = async (req, res) => {
-  const userId = req.user._id;
-  const page = req.params.page || 1;
+  const userId = req?.user?._id;
+  const page = req?.params?.page;
   const itemsPerPage = 10;
 
   try {
