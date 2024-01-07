@@ -67,19 +67,28 @@ const getWatchList = async (req, res) => {
       });
     }
 
-    const skip = (page - 1) * itemsPerPage;
-    const limit = itemsPerPage;
+    if (page) {
+      const skip = (page - 1) * itemsPerPage;
+      const limit = itemsPerPage;
 
-    const watchListData = await watchList
-      .find({ userId })
-      .skip(skip)
-      .limit(limit);
+      const watchListData = await watchList
+        .find({ userId })
+        .skip(skip)
+        .limit(limit);
 
-    return send200(res, {
-      status: true,
-      message: MESSAGE.WATCH_LIST_DATA,
-      data: watchListData || [],
-    });
+      return send200(res, {
+        status: true,
+        message: MESSAGE.WATCH_LIST_DATA,
+        data: watchListData || [],
+      });
+    } else {
+      const watchListData = await watchList.find({ userId });
+      return send200(res, {
+        status: true,
+        message: MESSAGE.WATCH_LIST_DATA,
+        data: watchListData || [],
+      });
+    }
   } catch (error) {
     return send500(res, {
       status: false,
