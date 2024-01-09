@@ -17,7 +17,7 @@ const {
 
 router.post("/addtowatchlist", verifyToken, addToWatchList);
 router.get("/getwatchlist/:page?", verifyToken, getWatchList);
-router.delete("/removewatchlistitem/:id", verifyToken, removeWatchListItem);
+router.delete("/removewatchlistitem/:symbol", verifyToken, removeWatchListItem);
 router.post("/buy", verifyToken, buy);
 router.get("/getmystocks/:type?", verifyToken, getMyStocks);
 router.post("/squareoff", verifyToken, squareOff);
