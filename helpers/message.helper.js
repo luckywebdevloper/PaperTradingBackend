@@ -42,4 +42,7 @@ export const MESSAGE = {
   INVALID_TYPE: "Invalid type",
   SELL_ERROR: "Sell only works in intraday",
   DECODED_DATA: "Decoded stock data",
+  STOCK_NOT_FOUND: "Stock not found",
+  INVALID_STOCK_STATUS: "Stocks can be cancelled only in pending state",
+  STOCK_DELETED: "Stock cancelled successfully",
 };

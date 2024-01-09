@@ -71,7 +71,10 @@ const intradayWithLMT = async (data) => {
           resolve("Position squared off, db updated");
           return;
         }
-        if (price === stockData.stockPrice && !matched) {
+        if (
+          Math.floor(price) === Math.floor(stockData.stockPrice) &&
+          !matched
+        ) {
           const totalAmount = stockData.quantity * price;
           matched = true;
           await Stock.findByIdAndUpdate(id, {
@@ -197,7 +200,10 @@ const intradayWithSL = async (data) => {
           resolve("Match not found, db updated");
           return;
         }
-        if (price === stockData.stockPrice && !stopLossStatus) {
+        if (
+          Math.floor(price) === Math.floor(stockData.stockPrice) &&
+          !stopLossStatus
+        ) {
           stopLossStatus = true;
           const totalAmount = stockData.quantity * price;
           matched = true;
@@ -318,7 +324,10 @@ const deliveryWithSL = async (data) => {
           resolve("Match not found, db updated");
           return;
         }
-        if (price === stockData.stockPrice && !stopLossStatus) {
+        if (
+          Math.floor(price) === Math.floor(stockData.stockPrice) &&
+          !stopLossStatus
+        ) {
           stopLossStatus = true;
           const totalAmount = stockData.quantity * price;
           matched = true;
@@ -508,7 +517,10 @@ const deliveryWithLMT = async (data) => {
           resolve("Position squared off, db updated");
           return;
         }
-        if (price === stockData.stockPrice && !matched) {
+        if (
+          Math.floor(price) === Math.floor(stockData.stockPrice) &&
+          !matched
+        ) {
           const totalAmount = stockData.quantity * price;
           matched = true;
           await Stock.findByIdAndUpdate(id, {

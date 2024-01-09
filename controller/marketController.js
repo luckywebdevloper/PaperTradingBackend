@@ -798,6 +798,51 @@ const decodeStockData = async (req, res) => {
   }
 };
 
+const deleteStock = async (req, res) => {
+  const userId = req.user._id;
+  const itemId = req.params.stockId;
+  try {
+    if (!itemId) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.FIELDS_REQUIRED,
+      });
+    }
+    const userData = await User.findOne({ _id: userId });
+    const StockData = await Stock.findOne({ userId, _id: itemId });
+    if (!StockData) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.STOCK_NOT_FOUND,
+      });
+    }
+    if (Stock.executed || Stock.squareOff) {
+      return send400(res, {
+        status: false,
+        message: MESSAGE.INVALID_STOCK_STATUS,
+      });
+    }
+    await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $set: {
+          wallet: userData.wallet + StockData.totalAmount,
+        },
+      }
+    );
+    await StockData.findOneAndDelete({ userId, _id: itemId });
+    return send200(res, {
+      status: true,
+      message: MESSAGE.STOCK_DELETED,
+    });
+  } catch (error) {
+    return send500(res, {
+      status: false,
+      message: error.message,
+    });
+  }
+};
+
 const marketController = {
   addToWatchList,
   getWatchList,
@@ -808,6 +853,7 @@ const marketController = {
   getMyStockHistory,
   sell,
   decodeStockData,
+  deleteStock,
 };
 
 export default marketController;
