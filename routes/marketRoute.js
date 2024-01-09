@@ -23,7 +23,7 @@ router.get("/getmystocks/:type?", verifyToken, getMyStocks);
 router.post("/squareoff", verifyToken, squareOff);
 router.get("/getmystockhistory", verifyToken, getMyStockHistory);
 router.post("/sell", verifyToken, sell);
-router.post("/deletestock", verifyToken, deleteStock);
+router.delete("/deletestock/:id", verifyToken, deleteStock);
 router.post("/decodestockdata", decodeStockData);
 
 export default router;

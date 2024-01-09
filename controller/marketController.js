@@ -800,7 +800,7 @@ const decodeStockData = async (req, res) => {
 
 const deleteStock = async (req, res) => {
   const userId = req.user._id;
-  const itemId = req.params.stockId;
+  const itemId = req.params.id;
   try {
     if (!itemId) {
       return send400(res, {
