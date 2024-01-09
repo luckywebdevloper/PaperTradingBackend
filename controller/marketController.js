@@ -99,16 +99,16 @@ const getWatchList = async (req, res) => {
 
 const removeWatchListItem = async (req, res) => {
   const userId = req.user._id;
-  const itemId = req.params.id;
+  const symbol = req.params.symbol;
   try {
-    const watchListData = await watchList.findOne({ userId, _id: itemId });
+    const watchListData = await watchList.findOne({ userId, symbol });
     if (!watchListData) {
       return send400(res, {
         status: false,
         message: MESSAGE.SYMBOL_NOT_FOUND,
       });
     }
-    await watchList.findOneAndDelete({ userId, _id: itemId });
+    await watchList.findOneAndDelete({ userId, symbol });
     return send200(res, {
       status: true,
       message: MESSAGE.SYMBOL_REMOVED,
