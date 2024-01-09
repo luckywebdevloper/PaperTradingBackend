@@ -1,4 +1,4 @@
-import getStockPrice from "./getStockPrice";
+import getStockPrice from "./getStockPrice.js";
 
 const checkPrice = async (symbol) => {
   const data = await getStockPrice(symbol);
