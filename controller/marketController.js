@@ -830,7 +830,7 @@ const deleteStock = async (req, res) => {
         },
       }
     );
-    await StockData.findOneAndDelete({ userId, _id: itemId });
+    await Stock.findOneAndDelete({ userId, _id: itemId });
     return send200(res, {
       status: true,
       message: MESSAGE.STOCK_DELETED,
