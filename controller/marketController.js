@@ -702,7 +702,7 @@ const squareOff = async (req, res) => {
       {
         $set: {
           stockPrice: latestPrice,
-          netProfitAndLoss: stockData.totalAmount - newPrice,
+          netProfitAndLoss: newPrice - stockData.totalAmount,
           squareOff: true,
           totalAmount: newPrice,
           squareOffDate: new Date(),
@@ -713,7 +713,7 @@ const squareOff = async (req, res) => {
       { _id: userId },
       {
         $set: {
-          wallet: userData.wallet + totalAmount,
+          wallet: userData.wallet + newPrice,
         },
       }
     );
