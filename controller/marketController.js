@@ -711,7 +711,6 @@ const squareOff = async (req, res) => {
       {
         $set: {
           wallet: userData.wallet + totalAmount,
-          totalInvested: userData.totalInvested + totalAmount,
         },
       }
     );
