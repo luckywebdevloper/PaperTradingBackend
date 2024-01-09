@@ -13,6 +13,7 @@ import { Buffer } from "buffer";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import protobuf from "protobufjs";
+import checkPrice from "../utils/checkPrice.js";
 
 const { send200, send201, send403, send400, send401, send404, send500 } =
   responseHelper;
@@ -658,11 +659,11 @@ const sell = async (req, res) => {
 };
 
 const squareOff = async (req, res) => {
-  const { stockId, totalAmount, stockPrice } = req.body;
+  const { stockId } = req.body;
   const userId = req.user._id;
   try {
     const isValidTime = isBetween915AMAnd320PM();
-    if (!stockId || !totalAmount || !stockPrice) {
+    if (!stockId) {
       return send400(res, {
         status: false,
         message: MESSAGE.FIELDS_REQUIRED,
@@ -694,14 +695,16 @@ const squareOff = async (req, res) => {
       });
     }
     const userData = await User.findOne({ _id: userId });
+    const latestPrice = await checkPrice(stockData.symbol);
+    const newPrice = latestPrice * stockData.quantity;
     await Stock.findOneAndUpdate(
       { _id: stockId },
       {
         $set: {
-          stockPrice,
-          netProfitAndLoss: stockData.totalAmount - totalAmount,
+          stockPrice: latestPrice,
+          netProfitAndLoss: stockData.totalAmount - newPrice,
           squareOff: true,
-          totalAmount,
+          totalAmount: newPrice,
           squareOffDate: new Date(),
         },
       }

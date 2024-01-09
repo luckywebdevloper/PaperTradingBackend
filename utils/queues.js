@@ -23,6 +23,12 @@ const intradayWithLMT = async (data) => {
     const interval = setInterval(async () => {
       const userData = await User.findOne({ _id: userId });
       const stockData = await Stock.findById(id);
+      if (!userData || !stockData) {
+        clearInterval(interval);
+        delete activeProcesses[stockData.intervalId];
+        resolve("Stock not found");
+        return;
+      }
       const isValidTime = isBetween915AMAnd320PM();
       const price = await checkPrice(symbol);
       if (!stockData.squareOff) {
@@ -119,6 +125,12 @@ const intradayWithMKT = async (data) => {
     const interval = setInterval(async () => {
       const userData = await User.findOne({ _id: userId });
       const stockData = await Stock.findById(id);
+      if (!userData || !stockData) {
+        clearInterval(interval);
+        delete activeProcesses[stockData.intervalId];
+        resolve("Stock not found");
+        return;
+      }
       const isValidTime = isBetween915AMAnd320PM();
       const price = await checkPrice(symbol);
       if (!stockData.squareOff) {
@@ -177,6 +189,12 @@ const intradayWithSL = async (data) => {
     const interval = setInterval(async () => {
       const userData = await User.findOne({ _id: userId });
       const stockData = await Stock.findById(id);
+      if (!userData || !stockData) {
+        clearInterval(interval);
+        delete activeProcesses[stockData.intervalId];
+        resolve("Stock not found");
+        return;
+      }
       const price = await checkPrice(symbol);
       const isValidTime = isBetween915AMAnd320PM();
       if (!stockData.squareOff) {
@@ -301,6 +319,12 @@ const deliveryWithSL = async (data) => {
     const interval = setInterval(async () => {
       const userData = await User.findOne({ _id: userId });
       const stockData = await Stock.findById(id);
+      if (!userData || !stockData) {
+        clearInterval(interval);
+        delete activeProcesses[stockData.intervalId];
+        resolve("Stock not found");
+        return;
+      }
       const price = await checkPrice(symbol);
       const isValidTime = isBeforeGivenDay(stockData.toSquareOffOn);
       if (!stockData.squareOff) {
@@ -422,6 +446,12 @@ const deliveryWithMKT = async (data) => {
   return new Promise(async (resolve, reject) => {
     const stockData = await Stock.findById(id);
     const userData = await User.findOne({ _id: userId });
+    if (!userData || !stockData) {
+      clearInterval(interval);
+      delete activeProcesses[stockData.intervalId];
+      resolve("Stock not found");
+      return;
+    }
     const isValidTime = isBeforeGivenDay(stockData.toSquareOffOn);
     const price = await checkPrice(symbol);
     const interval = setInterval(async () => {
@@ -469,6 +499,12 @@ const deliveryWithLMT = async (data) => {
     const interval = setInterval(async () => {
       const userData = await User.findOne({ _id: userId });
       const stockData = await Stock.findById(id);
+      if (!userData || !stockData) {
+        clearInterval(interval);
+        delete activeProcesses[stockData.intervalId];
+        resolve("Stock not found");
+        return;
+      }
       if (!stockData.squareOff) {
         const isValidTime = isBeforeGivenDay(stockData.toSquareOffOn);
         const price = await checkPrice(symbol);
