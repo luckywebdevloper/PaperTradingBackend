@@ -54,10 +54,11 @@ const intradayWithLMT = async (data) => {
         }
         if (matched && !isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -68,7 +69,7 @@ const intradayWithLMT = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -136,10 +137,11 @@ const intradayWithMKT = async (data) => {
       if (!stockData.squareOff) {
         if (!isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -150,7 +152,7 @@ const intradayWithMKT = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -241,10 +243,11 @@ const intradayWithSL = async (data) => {
         }
         if (stopLossStatus && stopLoss === price && isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -255,7 +258,7 @@ const intradayWithSL = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -266,10 +269,11 @@ const intradayWithSL = async (data) => {
         }
         if (stopLossStatus && !isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -280,7 +284,7 @@ const intradayWithSL = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -371,10 +375,11 @@ const deliveryWithSL = async (data) => {
         }
         if (stopLossStatus && stopLoss === price && isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -385,7 +390,7 @@ const deliveryWithSL = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -396,10 +401,11 @@ const deliveryWithSL = async (data) => {
         }
         if (stopLossStatus && !isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -410,7 +416,7 @@ const deliveryWithSL = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -458,10 +464,11 @@ const deliveryWithMKT = async (data) => {
       if (!stockData.squareOff) {
         if (!isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -472,7 +479,7 @@ const deliveryWithMKT = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
@@ -530,10 +537,11 @@ const deliveryWithLMT = async (data) => {
         }
         if (matched && !isValidTime) {
           const totalAmount = stockData.quantity * price;
+          const PL = stockData.totalAmount - totalAmount;
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
-              netProfitAndLoss: stockData.totalAmount - totalAmount,
+              netProfitAndLoss: PL,
               squareOff: true,
               totalAmount,
               squareOffDate: new Date(),
@@ -544,7 +552,7 @@ const deliveryWithLMT = async (data) => {
             {
               $set: {
                 wallet: userData.wallet + totalAmount,
-                overallProfit: userData.overallProfit + totalAmount,
+                overallProfit: userData.overallProfit + PL,
               },
             }
           );
