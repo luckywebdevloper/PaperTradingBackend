@@ -25,11 +25,11 @@ const userSchema = new Schema(
       default: 1000000,
     },
     overallProfit: {
-      type: String,
-      default: null,
+      type: Number,
+      default: 0,
     },
     todayProfit: {
-      type: String,
+      type: Number,
       default: null,
     },
     userPicture: {

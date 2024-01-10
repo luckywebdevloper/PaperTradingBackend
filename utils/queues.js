@@ -54,7 +54,7 @@ const intradayWithLMT = async (data) => {
         }
         if (matched && !isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -137,7 +137,7 @@ const intradayWithMKT = async (data) => {
       if (!stockData.squareOff) {
         if (!isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -243,7 +243,7 @@ const intradayWithSL = async (data) => {
         }
         if (stopLossStatus && stopLoss === price && isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -269,7 +269,7 @@ const intradayWithSL = async (data) => {
         }
         if (stopLossStatus && !isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -375,7 +375,7 @@ const deliveryWithSL = async (data) => {
         }
         if (stopLossStatus && stopLoss === price && isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -401,7 +401,7 @@ const deliveryWithSL = async (data) => {
         }
         if (stopLossStatus && !isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -464,7 +464,7 @@ const deliveryWithMKT = async (data) => {
       if (!stockData.squareOff) {
         if (!isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,
@@ -537,7 +537,7 @@ const deliveryWithLMT = async (data) => {
         }
         if (matched && !isValidTime) {
           const totalAmount = stockData.quantity * price;
-          const PL = stockData.totalAmount - totalAmount;
+          const PL = Number(stockData.totalAmount) - Number(totalAmount);
           await Stock.findByIdAndUpdate(id, {
             $set: {
               stockPrice: price,

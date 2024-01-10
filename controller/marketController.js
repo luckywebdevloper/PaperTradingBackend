@@ -697,12 +697,13 @@ const squareOff = async (req, res) => {
     const userData = await User.findOne({ _id: userId });
     const latestPrice = await checkPrice(stockData.symbol);
     const newPrice = latestPrice * stockData.quantity;
+    const PL = Number(newPrice) - Number(stockData.totalAmount);
     await Stock.findOneAndUpdate(
       { _id: stockId },
       {
         $set: {
           stockPrice: latestPrice,
-          netProfitAndLoss: newPrice - stockData.totalAmount,
+          netProfitAndLoss: PL,
           squareOff: true,
           totalAmount: newPrice,
           squareOffDate: new Date(),
@@ -714,8 +715,7 @@ const squareOff = async (req, res) => {
       {
         $set: {
           wallet: userData.wallet + newPrice,
-          overallProfit:
-            userData.overallProfit + (newPrice - stockData.totalAmount),
+          overallProfit: userData.overallProfit + PL,
         },
       }
     );
