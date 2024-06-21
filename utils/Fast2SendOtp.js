@@ -6,7 +6,7 @@ const Fast2SendOtp = ({ message, contactNumber }) => {
       const res = await fast2sms.sendMessage({
         authorization: process.env.FAST2SMS,
         message,
-        route = q
+        route = q,
         numbers: [contactNumber],
         // showLogs: true,
       });
