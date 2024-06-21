@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 mongoose
   .connect(
-    "mongodb+srv://mobiartlucky:Xmv02441!@tradingapp.dpv9zgj.mongodb.net/",
+    "mongodb+srv://luckyneo:Xmv02441!@papertrading.vttwau1.mongodb.net/",
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
