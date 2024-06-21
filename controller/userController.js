@@ -92,7 +92,7 @@ const sendOtp = async (req, res) => {
     );
     await Fast2SendOtp({
       message: `Your OTP for Stockology is ${newOtp}`,
-      route :"q",
+
       contactNumber: phoneNumber,
     });
     return send200(res, {
